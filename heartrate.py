@@ -6,13 +6,20 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import shutil
+import json
 
+def signaltonoise(a, axis=0, ddof=0): 
+    a = np.asanyarray(a) 
+    m = a.mean(axis) 
+    sd = a.std(axis = axis, ddof = ddof) 
+    return m/sd
 
 # Function to extract frames from the video and find the sampling rate
 def extract_frames_and_sampling_rate(video_filename, output_directory):
    
     if os.path.exists(output_directory):
         shutil.rmtree(output_directory)
+
     os.makedirs(output_directory)
 
     # Open the video file
@@ -121,29 +128,50 @@ def getHR(filename):
     wd_filtered, m_filtered = hp.process(filtered_ppg_signal, sample_rate=len(x)/dur)
 
 # Plot the filtered PPG signal
-    plt.figure(figsize=(12, 4))
-    plt.plot(filtered_ppg_signal, label='Filtered PPG Signal')
-    plt.title('Filtered PPG Signal')
-    plt.xlabel('Sample')
-    plt.ylabel('Amplitude')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+#     plt.figure(figsize=(12, 4))
+#     plt.plot(filtered_ppg_signal, label='Filtered PPG Signal')
+#     plt.title('Filtered PPG Signal')
+#     plt.xlabel('Sample')
+#     plt.ylabel('Amplitude')
+#     plt.legend()
+#     plt.grid(True)
+#     plt.show()
 
-# Plot HeartPy's processing results on the filtered signal
-    plt.figure(figsize=(12, 6))
-    hp.plotter(wd_filtered, m_filtered)
-    plt.show()
+# # Plot HeartPy's processing results on the filtered signal
+#     plt.figure(figsize=(12, 6))
+#     hp.plotter(wd_filtered, m_filtered)
+#     plt.show()
 
 
     # for measure in m_filtered.keys():
     #     print('%s: %f' %(measure, m_filtered[measure]))
+    snr = signaltonoise(filtered_ppg_signal)
+    print(f"bpm : {m_filtered['bpm']} snr : {snr}")
 
-    return m_filtered
+    return m_filtered['bpm'],snr
 
 if __name__ == "__main__":
     # Have an end point here
-    print(getHR("Priya_17.MOV"))
+    data = { }
+    #print(getHR("Priya_17.MOV"))
+    files = os.listdir('Videos')
+    # print(files)
+    for file in files:
+        data[file] = { }
+        data[file]['hr'], data[file]['snr'] = getHR('Videos/'+file)
+        print(data)
+
+    with open('heartrate.json', 'w') as json_file:
+        json.dump(data, json_file)
+
+    print("JSON data saved locally.")
+
+
+
+
+
+
+
 
 
     
