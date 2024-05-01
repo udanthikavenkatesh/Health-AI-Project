@@ -6,10 +6,10 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 import shutil
+import threading
 
 # Function to extract frames from the video and find the sampling rate
 def extract_frames_and_sampling_rate(video_filename, output_directory):
-   
     if os.path.exists(output_directory):
         shutil.rmtree(output_directory)
 
@@ -21,9 +21,9 @@ def extract_frames_and_sampling_rate(video_filename, output_directory):
     frames = cap.get(cv2.CAP_PROP_FRAME_COUNT) 
     fps = cap.get(cv2.CAP_PROP_FPS) 
   
-#    calculate duration of the video 
- 
+    # calculate duration of the video 
     dur = round(frames / fps)
+    
     # Initialize frame count
     frame_count = 0
 
@@ -53,7 +53,7 @@ def get_image(image_path):
     '''
     image = Image.open(image_path)
     width, height = image.size
-    red, green, blue = image.split()
+    red, _, _ = image.split()  # Ignore green and blue channels
     red_values = list(red.getdata())
     return np.array(red_values).reshape((width, height))
 
@@ -64,29 +64,36 @@ def get_mean_intensity(image_path):
     image = get_image(image_path)
     return np.mean(image)
 
-def plot(x):
+def process_frames(start, end, output):
     '''
-    Plot the signal
-    TODO: Vertical flip and plot a normal PPG signal instead of an inverted one
+    Process a range of frames and store the mean intensities in a shared list.
     '''
-    fig = plt.figure(figsize=(13, 6))
-    ax = plt.axes()
-    ax.plot(list(range(len(x))), x)
-    plt.show()
+    dir = 'frames/'
+    for j in range(start, end):
+        image_path = os.path.join(dir, f'frame_{j}.jpg')
+        output[j] = get_mean_intensity(image_path)
 
-def get_signal_from():
+def get_signal_from(num_threads=4):
     '''
     Return PPG signal as a sequence of mean intensities from the sequence of
     images that were captured by a device (NoIR camera or iphone camera)
     '''
- 
     dir = 'frames/'
     length = len(os.listdir(dir))
-    x = []
-    for j in range(length):
-        image_path = dir+'frame_'+str(j)+'.jpg'
-        print('reading image: ' + image_path)
-        x.append(get_mean_intensity(image_path))
+    x = [0] * length
+    threads = []
+    chunk_size = length // num_threads
+
+    for i in range(num_threads):
+        start = i * chunk_size
+        end = (i + 1) * chunk_size if i < num_threads - 1 else length
+        thread = threading.Thread(target=process_frames, args=(start, end, x))
+        thread.start()
+        threads.append(thread)
+
+    for thread in threads:
+        thread.join()
+
     return x
 
 
@@ -103,39 +110,23 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 def getHR(filename):
-
     output_directory = 'frames/'
     dur = extract_frames_and_sampling_rate(filename, output_directory)
 
     x = get_signal_from()
-# Define the cutoff frequencies and order of the filter
+    # Define the cutoff frequencies and order of the filter
     lowcut = 0.5  # Lower cutoff frequency in Hz
     highcut = 10.0  # Upper cutoff frequency in Hz
     order = 4  # Filter order
 
-# Apply the bandpass filter to the PPG signal
-    filtered_ppg_signal = butter_bandpass_filter(x, lowcut, highcut, len(x)/dur, order)
+    # Apply the bandpass filter to the PPG signal
+    filtered_ppg_signal = butter_bandpass_filter(x, lowcut, highcut, len(x) / dur, order)
 
-
-# Process the filtered PPG signal with HeartPy
-    wd_filtered, m_filtered = hp.process(filtered_ppg_signal, sample_rate=len(x)/dur)
-    # print("NO of signal points", len(x))
-   
-# # Perform prediction using the loaded model
-
-#     t = np.array([filtered_ppg_signal])
-#     svr_pred = loaded_model.predict(t)
-
-# # Print the predicted glucose value
-#     print('Predicted Glucose:', svr_pred)
-#     m_filtered['glucose_level'] = svr_pred[0]
+    # Process the filtered PPG signal with HeartPy
+    wd_filtered, m_filtered = hp.process(filtered_ppg_signal, sample_rate=len(x) / dur)
     
     return m_filtered
-
 
 if __name__ == "__main__":
     # Have an end point here
     print(getHR("902578060.mp4"))
-
-
-    

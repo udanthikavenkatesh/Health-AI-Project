@@ -20,10 +20,6 @@ export default function VideoRecorder({language}) {
 
 
   const [hr, setHR] = useState(0);
-  const [br, setBR] = useState(0);
-  const [gl, setGL] = useState(0);
-  const [phone, setPhone] = useState('');
-
 
   let cameraRef = null;
  
@@ -54,7 +50,7 @@ export default function VideoRecorder({language}) {
         ext: ext,
         data: file
       };
-
+  
       const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -62,41 +58,31 @@ export default function VideoRecorder({language}) {
         },
         body: JSON.stringify(requestBody),
       });
-
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status} :`);
       }
-
+  
       const responseData = await response.json();
       console.log('Response data:', responseData);
-
-      setBR();
+ 
       setHR();
-      setGL(responseData.glucose_level);
     
-
+  
       let vitals = processText('Heart Rate') +' : ' + responseData.bpm +'\n'+ processText('Breathing Rate') +' : '+ responseData.breathingrate +'\n';
       setResponseMessage(vitals); // Set response message
       setResponseModalVisible(true); // Show response modal
-
-      const currentTimeStamp = new Date();
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
-    const formattedDateTime = currentTimeStamp.toLocaleString('en-US', options);
-      
-
+  
+     
       const data = 
       {
-        'Phone' : phone,
-        'GlucoseLevel' : parseFloat(78.89),
+  
         'HeartRate' : parseFloat(responseData.bpm),
         'BreathingRate' : parseFloat(responseData.breathingrate),
-        'TimeStamp' : formattedDateTime
       }
-
-
+  
       console.log(data);
   
-
     } catch (error) {
       console.error('Error:', error);
     } finally {
