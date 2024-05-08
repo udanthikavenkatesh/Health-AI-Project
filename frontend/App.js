@@ -44,7 +44,7 @@ export default function VideoRecorder({language}) {
   async function sendRequest() {
     try {
       setLoading(true); // Set loading to true while awaiting response
-      const url = 'https://truly-keen-coyote.ngrok-free.app/gethr';
+      const url = 'https://truly-keen-coyote.ngrok-free.app/gethr';  // Endpoint of the server. 
       const requestBody = {
         userid:11,
         ext: ext,

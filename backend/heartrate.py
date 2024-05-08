@@ -110,23 +110,22 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     return y
 
 def getHR(filename):
-    output_directory = 'frames/'
-    dur = extract_frames_and_sampling_rate(filename, output_directory)
+    try:
+        output_directory = 'frames/'
+        dur = extract_frames_and_sampling_rate(filename, output_directory)
+        x = get_signal_from()
+        # Define the cutoff frequencies and order of the filter
+        lowcut = 0.5  # Lower cutoff frequency in Hz
+        highcut = 10.0  # Upper cutoff frequency in Hz
+        order = 4  # Filter order
+            # Apply the bandpass filter to the PPG signal
+        filtered_ppg_signal = butter_bandpass_filter(x, lowcut, highcut, len(x) / dur, order)
+            # Process the filtered PPG signal with HeartPy
+        wd_filtered, m_filtered = hp.process(filtered_ppg_signal, sample_rate=len(x) / dur)
+        return m_filtered
+    except:
+        print("Bad Signal Error: Retake the video")
 
-    x = get_signal_from()
-    # Define the cutoff frequencies and order of the filter
-    lowcut = 0.5  # Lower cutoff frequency in Hz
-    highcut = 10.0  # Upper cutoff frequency in Hz
-    order = 4  # Filter order
-
-    # Apply the bandpass filter to the PPG signal
-    filtered_ppg_signal = butter_bandpass_filter(x, lowcut, highcut, len(x) / dur, order)
-
-    # Process the filtered PPG signal with HeartPy
-    wd_filtered, m_filtered = hp.process(filtered_ppg_signal, sample_rate=len(x) / dur)
-    
-    return m_filtered
 
 if __name__ == "__main__":
-    # Have an end point here
     print(getHR("902578060.mp4"))
