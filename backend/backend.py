@@ -1,5 +1,5 @@
 from typing import Union
-from heartrate import getHR
+from heartrate import process_video
 from fastapi import FastAPI, Request, Response
 from starlette.responses import JSONResponse
 import base64
@@ -34,7 +34,7 @@ async def gethr(request:Request):
         end = time.time()
         print("Download time (s) : ", end-start)
         start = time.time()
-        v = getHR(filename)
+        v = process_video(filename)
         end = time.time()
         print("Processing time (s) :", end-start)
         print(v)
