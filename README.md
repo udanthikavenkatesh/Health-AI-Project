@@ -2,6 +2,9 @@
 
 ## All Files Contained Here
 
+
+##HEART RATE FINDING
+
 1. run pip install -r requirements.txt
 2. go to frontend folder
 3. run npm install
@@ -11,6 +14,13 @@
 7. run ngrok http [PORT where fastAPI is running]
 8. go to frontend folder
 9. npm start
+
+
+##BP FINDING 
+
+1. Run the ipynb notebook to train different models
+2. Queensland dataset is used to train various models
+3. Accurate results of BP depends on Position,Video Quality,Pressure of the finger while recording.
 
 # Analysis
 
